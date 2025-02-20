@@ -16,10 +16,6 @@ Ray generate_ray(Scene& scene, int x, int y) {
     float res_x = (2 * x_c / float(scene.width) - 1) * tan_fov_x;
     float res_y = -(2 * y_c / float(scene.height) - 1) * tan_fov_y;
     glm::vec3 dir = res_x * scene.camera_right + res_y * scene.camera_up + scene.camera_forward;
-    // if (y == 0) {
-    //     std::cout << "!!!" << std::endl;
-    //     std::cout << dir.x << ' ' << dir.y << ' ' << dir.z << std::endl;
-    // }
     return Ray(scene.camera_position, glm::normalize(dir));
 }
 
@@ -40,7 +36,6 @@ std::pair<std::optional<float>, Color> intersection(Ray r, Scene& s) {
 std::optional<float> intersection(Ray r, Object obj) {
     r.start -= obj.position;
     glm::quat back_rotation = glm::inverse(obj.rotation);
-    // std::cout << back_rotation.x << ' ' << back_rotation.y << ' ' << back_rotation.z << ' ' << back_rotation.w << std::endl;
     r.start = back_rotation * r.start;
     r.direction = glm::normalize(back_rotation * r.direction);
     std::optional<float> res_int;
@@ -49,12 +44,7 @@ std::optional<float> intersection(Ray r, Object obj) {
 }
 
 std::optional<float> intersection(Ray r, Plane p) {
-    // std::cout << r.start.x << ' ' << r.start.y << ' ' << r.start.z << std::endl;
-    // std::cout << r.direction.x << ' ' << r.direction.y << ' ' << r.direction.z << std::endl;
     float t = -(glm::dot(r.start, p.normal)) / (glm::dot(r.direction, p.normal));
-    // std::cout << (glm::dot(r.start, p.normal)) << ' ' << (glm::dot(r.direction, p.normal)) << ' ' << t << std::endl;
-    // std::cout << t << ' ' << glm::dot(r.direction, p.normal) << std::endl;
-    // std::cout << "Plane ";
     if (t < 0) {
         return std::nullopt;
     }
@@ -62,15 +52,13 @@ std::optional<float> intersection(Ray r, Plane p) {
 }
 
 std::optional<float> intersection(Ray r, Ellips e) {
-    // std::cout << "Ellips ";
     glm::vec3 o_r = glm::vec3(r.start.x / e.radius.x, r.start.y / e.radius.y, r.start.z / e.radius.z);
     glm::vec3 d_r = glm::vec3(r.direction.x / e.radius.x, r.direction.y / e.radius.y, r.direction.z / e.radius.z);
-    float c = glm::dot(o_r, o_r);
+    float c = glm::dot(o_r, o_r) - 1;
     float b2 = glm::dot(o_r, d_r);
     float a = glm::dot(d_r, d_r);
     float disc = b2 * b2 - a * c;
     if (disc < 0) {
-        // std::cout << "None\n";
         return std::nullopt;
     }
     float t1 = (-b2 - sqrt(disc)) / a;
@@ -79,19 +67,15 @@ std::optional<float> intersection(Ray r, Ellips e) {
         std::swap(t1, t2);
     }
     if (t2 < 0) {
-        // std::cout << "None\n";
         return std::nullopt;
     }
     if (t1 < 0) {
-        // std::cout << t2 << std::endl;
         return t2;
     }
-    // std::cout << t1 << std::endl;
     return t1;
 }
 
 std::optional<float> intersection(Ray r, Box b) {
-    // std::cout << "Box ";
     float t1x = (-b.size.x - r.start.x) / r.direction.x;
     float t2x = (b.size.x - r.start.x) / r.direction.x;
     float t1y = (-b.size.y - r.start.y) / r.direction.y;
@@ -110,18 +94,13 @@ std::optional<float> intersection(Ray r, Box b) {
     float t1 = std::max(t1x, std::max(t1y, t1z));
     float t2 = std::min(t2x, std::min(t2y, t2z));
     if (t1 > t2) {
-        // std::cout << "1 None\n";
-        // std::cout << t1 << ' ' << t2 << std::endl;
         return std::nullopt;
     }
     if (t2 < 0) {
-        // std::cout << "2 None\n";
         return std::nullopt;
     }
     if (t1 < 0) {
-        // std::cout << t2 << std::endl;
         return t2;
     }
-    // std::cout << t1 << std::endl;
     return t1;
 }
