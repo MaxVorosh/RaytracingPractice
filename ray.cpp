@@ -9,13 +9,17 @@ int convert_color(float component) {
 
 Ray generate_ray(Scene& scene, int x, int y) {
     float aspect_ratio = scene.width / float(scene.height);
-    float tan_fov_x = std::tan(scene.camera_fov_x);
+    float tan_fov_x = std::tan(scene.camera_fov_x / 2.0);
     float tan_fov_y = tan_fov_x / aspect_ratio;
     float x_c = float(x) + 0.5;
     float y_c = float(y) + 0.5;
     float res_x = (2 * x_c / float(scene.width) - 1) * tan_fov_x;
-    float res_y = (2 * y_c / float(scene.height) - 1) * tan_fov_y;
+    float res_y = -(2 * y_c / float(scene.height) - 1) * tan_fov_y;
     glm::vec3 dir = res_x * scene.camera_right + res_y * scene.camera_up + scene.camera_forward;
+    // if (y == 0) {
+    //     std::cout << "!!!" << std::endl;
+    //     std::cout << dir.x << ' ' << dir.y << ' ' << dir.z << std::endl;
+    // }
     return Ray(scene.camera_position, glm::normalize(dir));
 }
 
@@ -36,6 +40,7 @@ std::pair<std::optional<float>, Color> intersection(Ray r, Scene& s) {
 std::optional<float> intersection(Ray r, Object obj) {
     r.start -= obj.position;
     glm::quat back_rotation = glm::inverse(obj.rotation);
+    // std::cout << back_rotation.x << ' ' << back_rotation.y << ' ' << back_rotation.z << ' ' << back_rotation.w << std::endl;
     r.start = back_rotation * r.start;
     r.direction = glm::normalize(back_rotation * r.direction);
     std::optional<float> res_int;
@@ -47,13 +52,12 @@ std::optional<float> intersection(Ray r, Plane p) {
     // std::cout << r.start.x << ' ' << r.start.y << ' ' << r.start.z << std::endl;
     // std::cout << r.direction.x << ' ' << r.direction.y << ' ' << r.direction.z << std::endl;
     float t = -(glm::dot(r.start, p.normal)) / (glm::dot(r.direction, p.normal));
+    // std::cout << (glm::dot(r.start, p.normal)) << ' ' << (glm::dot(r.direction, p.normal)) << ' ' << t << std::endl;
     // std::cout << t << ' ' << glm::dot(r.direction, p.normal) << std::endl;
     // std::cout << "Plane ";
     if (t < 0) {
-        // std::cout << "None\n";
         return std::nullopt;
     }
-    // std::cout << t << std::endl;
     return t;
 }
 

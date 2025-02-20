@@ -9,7 +9,7 @@ void fill_scene(Scene& scene, ScenePixels& result_scene) {
         for (int j = 0; j < result_scene.height; ++j) {
             Ray r = generate_ray(scene, i, j);
             auto inter = intersection(r, scene);
-            result_scene.pixels[i * result_scene.height + j] = inter.second;
+            result_scene.pixels[i + j * result_scene.width] = inter.second;
         }
     }
 }

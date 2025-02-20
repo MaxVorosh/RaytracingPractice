@@ -73,7 +73,7 @@ Scene parse(std::string filename) {
         else if (command == "ROTATION") {
             float x, y, z, w;
             sin >> x >> y >> z >> w;
-            scene.objects.back().rotation = glm::quat(x, y, z, w);
+            scene.objects.back().rotation = glm::quat(w, x, y, z);
         }
         else if (command == "COLOR") {
             float r, g, b;
