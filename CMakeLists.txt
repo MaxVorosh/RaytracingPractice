@@ -14,6 +14,8 @@ add_executable(raytracing main.cpp
     image_writer.cpp
     image_writer.h
     structures.h
+    ray.cpp
+    ray.h
 )
 
 target_include_directories(raytracing PUBLIC .)

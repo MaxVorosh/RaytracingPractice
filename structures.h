@@ -2,6 +2,7 @@
 #include <variant>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #pragma once
 
@@ -33,14 +34,29 @@ struct ScenePixels {
 
 struct Plane {
     glm::vec3 normal;
+
+    Plane() = default;
+    Plane(glm::vec3 n) {
+        normal = glm::normalize(n);
+    }
 };
 
 struct Ellips {
     glm::vec3 radius;
+
+    Ellips() = default;
+    Ellips(glm::vec3 r) {
+        radius = r;
+    }
 };
 
 struct Box {
     glm::vec3 size;
+
+    Box() = default;
+    Box(glm::vec3 s) {
+        size = s;
+    }
 };
 
 using Shape = std::variant<Plane, Ellips, Box>;
@@ -48,8 +64,8 @@ using Shape = std::variant<Plane, Ellips, Box>;
 struct Object {
     Shape shape;
 
-    glm::vec3 position;
-    glm::vec4 rotation;
+    glm::vec3 position = glm::vec3(0, 0, 0);
+    glm::quat rotation = glm::quat(0, 0, 0, 1);
     glm::vec3 color;
 };
 
@@ -63,5 +79,18 @@ struct Scene {
     glm::vec3 camera_forward;
     float camera_fov_x;
 
+    std::vector<Object> objects;
+
     Scene() = default;
+};
+
+struct Ray {
+    glm::vec3 start;
+    glm::vec3 direction;
+
+    Ray() = default;
+    Ray(glm::vec3 s, glm::vec3 d) {
+        start = s;
+        direction = d;
+    }
 };

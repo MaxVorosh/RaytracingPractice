@@ -2,7 +2,6 @@
 #include <string>
 #include <fstream>
 #include <sstream>
-#include <glm/gtx/quaternion.hpp>
 
 Scene parse(std::string filename) {
     std::ifstream fin(filename);
@@ -48,5 +47,39 @@ Scene parse(std::string filename) {
             sin >> fov;
             scene.camera_fov_x = fov;
         }
+        else if (command == "NEW_PRIMITIVE") {
+            scene.objects.push_back(Object());
+        }
+        else if (command == "PLANE") {
+            float nx, ny, nz;
+            sin >> nx >> ny >> nz;
+            scene.objects.back().shape = Plane(glm::vec3(nx, ny, nz));
+        }
+        else if (command == "ELLIPSOID") {
+            float rx, ry, rz;
+            sin >> rx >> ry >> rz;
+            scene.objects.back().shape = Ellips(glm::vec3(rx, ry, rz));
+        }
+        else if (command == "BOX") {
+            float sx, sy, sz;
+            sin >> sx >> sy >> sz;
+            scene.objects.back().shape = Box(glm::vec3(sx, sy, sz));
+        }
+        else if (command == "POSITION") {
+            float x, y, z;
+            sin >> x >> y >> z;
+            scene.objects.back().position = glm::vec3(x, y, z);
+        }
+        else if (command == "ROTATION") {
+            float x, y, z, w;
+            sin >> x >> y >> z >> w;
+            scene.objects.back().rotation = glm::quat(x, y, z, w);
+        }
+        else if (command == "COLOR") {
+            float r, g, b;
+            sin >> r >> g >> b;
+            scene.objects.back().color = glm::vec3(r, g, b);
+        }
     }
+    return scene;
 }
