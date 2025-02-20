@@ -4,7 +4,7 @@
 
 void write_ppm_pixels(std::string filename, ScenePixels scene) {
     std::ofstream fout(filename, std::ios::binary);
-    fout << "P6\n" << Scene.width << ' ' << Scene.height << "\n255\n";
+    fout << "P6\n" << scene.width << ' ' << scene.height << "\n255\n";
     fout << scene.pixels.data();
     fout.close();
 }

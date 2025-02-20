@@ -1,13 +1,15 @@
 #include "parser.h"
 #include <string>
 #include <fstream>
+#include <sstream>
+#include <glm/gtx/quaternion.hpp>
 
 Scene parse(std::string filename) {
     std::ifstream fin(filename);
     Scene scene;
     std::string line;
     while (std::getline(fin, line)) {
-        std::sstream sin(line);
+        std::stringstream sin(line);
         std::string command;
         sin >> command;
         if (command == "DIMENSIONS") {

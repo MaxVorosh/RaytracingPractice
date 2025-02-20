@@ -1,4 +1,5 @@
 #include "structures.h"
+#include <string>
 
 #pragma once
 

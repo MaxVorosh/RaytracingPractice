@@ -1,5 +1,7 @@
 #include <vector>
+#include <variant>
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 #pragma once
 
@@ -14,7 +16,7 @@ struct Color {
         g = _g;
         b = _b;
     }
-}
+};
 
 struct ScenePixels {
     std::vector<Color> pixels;
@@ -27,29 +29,29 @@ struct ScenePixels {
         height = h;
         pixels = p;
     }
-}
+};
 
 struct Plane {
     glm::vec3 normal;
-}
+};
 
 struct Ellips {
     glm::vec3 radius;
-}
+};
 
 struct Box {
     glm::vec3 size;
-}
+};
 
-using Shape = std::variant(Plane, Ellips, Box);
+using Shape = std::variant<Plane, Ellips, Box>;
 
 struct Object {
-    shape shape;
+    Shape shape;
 
     glm::vec3 position;
     glm::vec4 rotation;
     glm::vec3 color;
-}
+};
 
 struct Scene {
     int width;
@@ -57,9 +59,9 @@ struct Scene {
     glm::vec3 bg_color;
     glm::vec3 camera_position;
     glm::vec3 camera_right;
-    glm::vec3 camera_top;
+    glm::vec3 camera_up;
     glm::vec3 camera_forward;
     float camera_fov_x;
 
     Scene() = default;
-}
+};
