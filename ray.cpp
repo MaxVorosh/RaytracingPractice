@@ -3,7 +3,20 @@
 #include <algorithm>
 #include <iostream>
 
+float aces_tone_map(float component) {
+    const float a = 2.51f;
+    const float b = 0.03f;
+    const float c = 2.43f;
+    const float d = 0.59f;
+    const float e = 0.14f;
+    float color = (component * (a * component + b)) / (component * (c * component + d) + e);
+    return glm::clamp(color, 0.f, 1.f);
+}
+
+
 int convert_color(float component) {
+    component = aces_tone_map(component);
+    component = pow(component, 1.0 / 2.2);
     return std::round(std::clamp(component * 255, 0.f, 255.f));
 }
 
