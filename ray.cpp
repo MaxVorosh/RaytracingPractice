@@ -57,6 +57,10 @@ std::optional<Intersection> intersection(Ray r, Object obj) {
     r.direction = glm::normalize(back_rotation * r.direction);
     std::optional<Intersection> res_int;
     std::visit([r, &res_int](const auto s){res_int = intersection(r, s);}, obj.shape);
+    if (!res_int.has_value()) {
+        return res_int;
+    }
+    res_int.value().norm = glm::normalize(back_rotation * res_int.value().norm);
     return res_int;
 }
 
@@ -65,9 +69,13 @@ std::optional<Intersection> intersection(Ray r, Plane p) {
     if (t < 0) {
         return std::nullopt;
     }
-
-    //TODO think about other parameters
-    return Intersection(t, p.normal, false);
+    glm::vec3 result_norm = p.normal;
+    bool is_inside = false;
+    if (glm::dot(r.direction, result_norm) < 0) {
+        is_inside = true;
+        result_norm *= -1;
+    }
+    return Intersection(t, result_norm, is_inside);
 }
 
 std::optional<Intersection> intersection(Ray r, Ellips e) {
@@ -82,6 +90,7 @@ std::optional<Intersection> intersection(Ray r, Ellips e) {
     }
     float t1 = (-b2 - sqrt(disc)) / a;
     float t2 = (-b2 + sqrt(disc)) / a;
+    float t = t1;
     if (t1 > t2) {
         std::swap(t1, t2);
     }
@@ -89,11 +98,21 @@ std::optional<Intersection> intersection(Ray r, Ellips e) {
         return std::nullopt;
     }
     if (t1 < 0) {
-        //TODO think about other parameters
-        return Intersection(t2, glm::vec3(1.0), false);
+        t = t2;
     }
-    //TODO think about other parameters
-    return Intersection(t1, glm::vec3(1.0), false);
+
+    glm::vec3 point = r.start + r.direction * t;
+    glm::vec3 norm = glm::vec3(
+        point.x / (e.radius.x * e.radius.x), point.y / (e.radius.y * e.radius.y), point.z / (e.radius.z * e.radius.z)
+    );
+    norm = glm::normalize(norm);
+    bool is_inside = false;
+    if (glm::dot(norm, r.direction) < 0) {
+        is_inside = true;
+        norm *= -1;
+    }
+
+    return Intersection(t, norm, is_inside);
 }
 
 std::optional<Intersection> intersection(Ray r, Box b) {
@@ -114,6 +133,7 @@ std::optional<Intersection> intersection(Ray r, Box b) {
     }
     float t1 = std::max(t1x, std::max(t1y, t1z));
     float t2 = std::min(t2x, std::min(t2y, t2z));
+    float t = t1;
     if (t1 > t2) {
         return std::nullopt;
     }
@@ -121,7 +141,28 @@ std::optional<Intersection> intersection(Ray r, Box b) {
         return std::nullopt;
     }
     if (t1 < 0) {
-        return Intersection(t2, glm::vec3(1.0), false);
+        t = t2;
+        // return Intersection(t2, glm::vec3(1.0), false);
     }
-    return Intersection(t1, glm::vec3(1.0), false);
+    glm::vec3 point = r.start + r.direction * t;
+    glm::vec3 norm = glm::vec3(point.x / b.size.x, point.y / b.size.y, point.z / b.size.z);
+    if (abs(norm.x) == 1) {
+        norm.y = 0;
+        norm.z = 0;
+    }
+    else if (abs(norm.y) == 1) {
+       norm.x = 0;
+       norm.z = 0;
+    }
+    else {
+        norm.x = 0;
+        norm.y = 0;
+    }
+
+    bool is_inside;
+    if (glm::dot(r.direction, norm) < 0) {
+        is_inside = true;
+        norm *= -1;
+    }
+    return Intersection(t, norm, is_inside);
 }
