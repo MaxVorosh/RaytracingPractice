@@ -20,6 +20,10 @@ int convert_color(float component) {
     return std::round(std::clamp(component * 255, 0.f, 255.f));
 }
 
+glm::vec3 get_color(Scene& scene, int obj_id) {
+    return scene.objects[obj_id].color;
+}
+
 Ray generate_ray(Scene& scene, int x, int y) {
     float aspect_ratio = scene.width / float(scene.height);
     float tan_fov_x = std::tan(scene.camera_fov_x / 2.0);
@@ -36,35 +40,37 @@ std::pair<std::optional<float>, Color> intersection(Ray r, Scene& s) {
     std::optional<float> inter = std::nullopt;
     glm::vec3 col = s.bg_color;
     for (int i = 0; i < s.objects.size(); ++i) {
-        std::optional<float> res_int  = intersection(r, s.objects[i]);
-        if (res_int.has_value() && (!inter.has_value() || inter.value() > res_int.value())) {
-            inter = res_int;
-            col = s.objects[i].color;
+        std::optional<Intersection> res_int  = intersection(r, s.objects[i]);
+        if (res_int.has_value() && (!inter.has_value() || inter.value() > res_int.value().t)) {
+            inter = res_int.value().t;
+            col = get_color(s, i);
         }
     }
     Color result_color = Color(convert_color(col.x), convert_color(col.y), convert_color(col.z));
     return {inter, result_color};
 }
 
-std::optional<float> intersection(Ray r, Object obj) {
+std::optional<Intersection> intersection(Ray r, Object obj) {
     r.start -= obj.position;
     glm::quat back_rotation = glm::inverse(obj.rotation);
     r.start = back_rotation * r.start;
     r.direction = glm::normalize(back_rotation * r.direction);
-    std::optional<float> res_int;
+    std::optional<Intersection> res_int;
     std::visit([r, &res_int](const auto s){res_int = intersection(r, s);}, obj.shape);
     return res_int;
 }
 
-std::optional<float> intersection(Ray r, Plane p) {
+std::optional<Intersection> intersection(Ray r, Plane p) {
     float t = -(glm::dot(r.start, p.normal)) / (glm::dot(r.direction, p.normal));
     if (t < 0) {
         return std::nullopt;
     }
-    return t;
+
+    //TODO think about other parameters
+    return Intersection(t, p.normal, false);
 }
 
-std::optional<float> intersection(Ray r, Ellips e) {
+std::optional<Intersection> intersection(Ray r, Ellips e) {
     glm::vec3 o_r = glm::vec3(r.start.x / e.radius.x, r.start.y / e.radius.y, r.start.z / e.radius.z);
     glm::vec3 d_r = glm::vec3(r.direction.x / e.radius.x, r.direction.y / e.radius.y, r.direction.z / e.radius.z);
     float c = glm::dot(o_r, o_r) - 1;
@@ -83,12 +89,14 @@ std::optional<float> intersection(Ray r, Ellips e) {
         return std::nullopt;
     }
     if (t1 < 0) {
-        return t2;
+        //TODO think about other parameters
+        return Intersection(t2, glm::vec3(1.0), false);
     }
-    return t1;
+    //TODO think about other parameters
+    return Intersection(t1, glm::vec3(1.0), false);
 }
 
-std::optional<float> intersection(Ray r, Box b) {
+std::optional<Intersection> intersection(Ray r, Box b) {
     float t1x = (-b.size.x - r.start.x) / r.direction.x;
     float t2x = (b.size.x - r.start.x) / r.direction.x;
     float t1y = (-b.size.y - r.start.y) / r.direction.y;
@@ -113,7 +121,7 @@ std::optional<float> intersection(Ray r, Box b) {
         return std::nullopt;
     }
     if (t1 < 0) {
-        return t2;
+        return Intersection(t2, glm::vec3(1.0), false);
     }
-    return t1;
+    return Intersection(t1, glm::vec3(1.0), false);
 }

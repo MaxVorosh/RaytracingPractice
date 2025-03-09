@@ -128,3 +128,15 @@ struct Ray {
         direction = d;
     }
 };
+
+struct Intersection {
+    float t;
+    glm::vec3 norm;
+    bool is_inside;
+
+    Intersection(float _t, glm::vec3 n, bool inside) {
+        t = _t;
+        norm = n;
+        is_inside = inside;
+    }
+};
