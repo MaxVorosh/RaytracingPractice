@@ -219,7 +219,6 @@ std::optional<Intersection> intersection(Ray r, Box b) {
     }
     glm::vec3 point = r.start + r.direction * t;
     glm::vec3 norm = point / b.size;
-    const float eps = 1e-3;
     if (abs(norm.x) >= abs(norm.y) && abs(norm.x) >= abs(norm.z)) {
         norm.y = 0;
         norm.z = 0;
@@ -233,7 +232,7 @@ std::optional<Intersection> intersection(Ray r, Box b) {
         norm.y = 0;
     }
     norm = glm::normalize(norm);
-    bool is_inside;
+    bool is_inside = false;
     if (glm::dot(r.direction, norm) > 0) {
         is_inside = true;
         norm *= -1;
