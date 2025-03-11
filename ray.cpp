@@ -20,8 +20,27 @@ int convert_color(float component) {
     return std::round(std::clamp(component * 255, 0.f, 255.f));
 }
 
-glm::vec3 get_color(Scene& scene, int obj_id) {
-    return scene.objects[obj_id].color;
+glm::vec3 get_color(Scene& scene, int obj_id, glm::vec3 start, Intersection inter) {
+    glm::vec3 color = scene.ambient_light;
+    if (scene.objects[obj_id].material == Material::Diffuse) {
+        for (auto& light: scene.lights) {
+            Ray r;
+            glm::vec3 I;
+            if (const PointLightConfig* confVal = std::get_if<PointLightConfig>(&light.config)) {
+                r = Ray(start, glm::normalize(confVal->position - start));
+                float dist = glm::distance(confVal->position, start);
+                float att = confVal->attenuation.x + confVal->attenuation.y * dist + confVal->attenuation.z * std::pow(dist, 2);
+                I = light.intensity / att;
+            }
+            else {
+                DirectLightConfig conf = std::get<DirectLightConfig>(light.config);
+                r = Ray(start, conf.direction);
+                I = light.intensity;
+            }
+            color += scene.objects[obj_id].color * std::max(glm::dot(inter.norm, r.direction), 0.f) * I;
+        }
+    }
+    return color;
 }
 
 Ray generate_ray(Scene& scene, int x, int y) {
@@ -43,7 +62,8 @@ std::pair<std::optional<float>, Color> intersection(Ray r, Scene& s) {
         std::optional<Intersection> res_int  = intersection(r, s.objects[i]);
         if (res_int.has_value() && (!inter.has_value() || inter.value() > res_int.value().t)) {
             inter = res_int.value().t;
-            col = get_color(s, i);
+            glm::vec3 point = r.start + r.direction * inter.value();
+            col = get_color(s, i, point, res_int.value());
         }
     }
     Color result_color = Color(convert_color(col.x), convert_color(col.y), convert_color(col.z));
@@ -60,7 +80,7 @@ std::optional<Intersection> intersection(Ray r, Object obj) {
     if (!res_int.has_value()) {
         return res_int;
     }
-    res_int.value().norm = glm::normalize(back_rotation * res_int.value().norm);
+    res_int.value().norm = glm::normalize(obj.rotation * res_int.value().norm);
     return res_int;
 }
 
@@ -71,11 +91,11 @@ std::optional<Intersection> intersection(Ray r, Plane p) {
     }
     glm::vec3 result_norm = p.normal;
     bool is_inside = false;
-    if (glm::dot(r.direction, result_norm) < 0) {
+    if (glm::dot(r.direction, result_norm) > 0) {
         is_inside = true;
         result_norm *= -1;
     }
-    return Intersection(t, result_norm, is_inside);
+    return Intersection(t, p.normal, false);
 }
 
 std::optional<Intersection> intersection(Ray r, Ellips e) {
@@ -107,7 +127,7 @@ std::optional<Intersection> intersection(Ray r, Ellips e) {
     );
     norm = glm::normalize(norm);
     bool is_inside = false;
-    if (glm::dot(norm, r.direction) < 0) {
+    if (glm::dot(norm, r.direction) > 0) {
         is_inside = true;
         norm *= -1;
     }
@@ -145,12 +165,13 @@ std::optional<Intersection> intersection(Ray r, Box b) {
         // return Intersection(t2, glm::vec3(1.0), false);
     }
     glm::vec3 point = r.start + r.direction * t;
-    glm::vec3 norm = glm::vec3(point.x / b.size.x, point.y / b.size.y, point.z / b.size.z);
-    if (abs(norm.x) == 1) {
+    glm::vec3 norm = point / b.size;
+    const float eps = 1e-6;
+    if (abs(norm.x) >= 1 - eps) {
         norm.y = 0;
         norm.z = 0;
     }
-    else if (abs(norm.y) == 1) {
+    else if (abs(norm.y) >= 1 - eps) {
        norm.x = 0;
        norm.z = 0;
     }
@@ -160,7 +181,7 @@ std::optional<Intersection> intersection(Ray r, Box b) {
     }
 
     bool is_inside;
-    if (glm::dot(r.direction, norm) < 0) {
+    if (glm::dot(r.direction, norm) > 0) {
         is_inside = true;
         norm *= -1;
     }

@@ -111,7 +111,7 @@ Scene parse(std::string filename) {
         else if (command == "LIGHT_DIRECTION") {
             float x, y, z;
             sin >> x >> y >> z;
-            scene.lights.back().config = DirectLightConfig(glm::vec3(x, y, z));
+            scene.lights.back().config = DirectLightConfig(glm::normalize(glm::vec3(x, y, z)));
         }
         else if (command == "LIGHT_POSITION") {
             float x, y, z;
