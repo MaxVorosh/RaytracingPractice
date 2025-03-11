@@ -53,6 +53,33 @@ glm::vec3 get_color(Scene& scene, int obj_id, Ray objR, Intersection inter, int 
         auto res = intersection(r, scene, recursion_depth + 1);
         return scene.objects[obj_id].color * res.second;
     }
+    if (scene.objects[obj_id].material == Material::Dielectric) {
+        Ray reflected = Ray(start, objR.direction - 2.f * inter.norm * glm::dot(inter.norm, objR.direction));
+        reflected.start += reflected.direction * eps;
+        glm::vec3 reflected_color = intersection(reflected, scene, recursion_depth + 1).second;
+
+        float cosine1 = glm::dot(-objR.direction, inter.norm);
+        float n1 = 1;
+        float n2 = scene.objects[obj_id].ior;
+        if (inter.is_inside) {
+            std::swap(n1, n2);
+        }
+        float sine2 = n1 / n2 * sqrt(1 - pow(cosine1, 2));
+        if (abs(sine2) > 1) {
+            return reflected_color;
+        }
+        float cosine2 = sqrt(1 - pow(sine2, 2));
+        Ray refracted = Ray(start, n1 / n2 * objR.direction + (n1 / n2 * cosine1 - cosine2) * inter.norm);
+        refracted.start += refracted.direction * eps;
+        glm::vec3 refracted_color = intersection(refracted, scene, recursion_depth + 1).second;
+
+        float R0 = pow((n1 - n2) / (n1 + n2), 2);
+        float R = R0 + (1 - R0) * pow(1 - cosine1, 5);
+        if (inter.is_inside) {
+            return R * reflected_color + (1 - R) * refracted_color;
+        }
+        return R * reflected_color + (1 - R) * refracted_color * scene.objects[obj_id].color;
+    }
     return color;
 }
 
