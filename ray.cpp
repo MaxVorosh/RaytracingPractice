@@ -111,7 +111,7 @@ bool shadowIntersection(Ray r, Scene& s, float min_dist) {
 std::pair<std::optional<float>, glm::vec3> intersection(Ray r, Scene& s, int recursion_depth) {
     std::optional<float> inter = std::nullopt;
     glm::vec3 col = s.bg_color;
-    if (recursion_depth > s.recursion_depth) {
+    if (recursion_depth == s.recursion_depth) {
         return {inter, col};
     }
     for (int i = 0; i < s.objects.size(); ++i) {
