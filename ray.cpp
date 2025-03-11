@@ -22,9 +22,9 @@ int convert_color(float component) {
 
 glm::vec3 get_color(Scene& scene, int obj_id, Ray objR, Intersection inter, int recursion_depth) {
     const float eps = 1e-4;
-    glm::vec3 color = scene.ambient_light;
     glm::vec3 start = objR.start + objR.direction * inter.t;
     if (scene.objects[obj_id].material == Material::Diffuse) {
+        glm::vec3 color = scene.ambient_light * scene.objects[obj_id].color;
         for (auto& light: scene.lights) {
             Ray r;
             glm::vec3 I;
@@ -80,7 +80,7 @@ glm::vec3 get_color(Scene& scene, int obj_id, Ray objR, Intersection inter, int 
         }
         return R * reflected_color + (1 - R) * refracted_color * scene.objects[obj_id].color;
     }
-    return color;
+    return glm::vec3(0.0);
 }
 
 Ray generate_ray(Scene& scene, int x, int y) {
@@ -149,7 +149,7 @@ std::optional<Intersection> intersection(Ray r, Plane p) {
         is_inside = true;
         result_norm *= -1;
     }
-    return Intersection(t, p.normal, false);
+    return Intersection(t, result_norm, is_inside);
 }
 
 std::optional<Intersection> intersection(Ray r, Ellips e) {
@@ -216,16 +216,15 @@ std::optional<Intersection> intersection(Ray r, Box b) {
     }
     if (t1 < 0) {
         t = t2;
-        // return Intersection(t2, glm::vec3(1.0), false);
     }
     glm::vec3 point = r.start + r.direction * t;
     glm::vec3 norm = point / b.size;
-    const float eps = 1e-6;
-    if (abs(norm.x) >= 1 - eps) {
+    const float eps = 1e-3;
+    if (abs(norm.x) >= abs(norm.y) && abs(norm.x) >= abs(norm.z)) {
         norm.y = 0;
         norm.z = 0;
     }
-    else if (abs(norm.y) >= 1 - eps) {
+    else if (abs(norm.y) >= abs(norm.z)) {
        norm.x = 0;
        norm.z = 0;
     }
@@ -233,7 +232,7 @@ std::optional<Intersection> intersection(Ray r, Box b) {
         norm.x = 0;
         norm.y = 0;
     }
-
+    norm = glm::normalize(norm);
     bool is_inside;
     if (glm::dot(r.direction, norm) > 0) {
         is_inside = true;
