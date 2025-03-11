@@ -20,9 +20,10 @@ int convert_color(float component) {
     return std::round(std::clamp(component * 255, 0.f, 255.f));
 }
 
-glm::vec3 get_color(Scene& scene, int obj_id, glm::vec3 start, Intersection inter) {
+glm::vec3 get_color(Scene& scene, int obj_id, Ray objR, Intersection inter, int recursion_depth) {
     const float eps = 1e-4;
     glm::vec3 color = scene.ambient_light;
+    glm::vec3 start = objR.start + objR.direction * inter.t;
     if (scene.objects[obj_id].material == Material::Diffuse) {
         for (auto& light: scene.lights) {
             Ray r;
@@ -44,6 +45,13 @@ glm::vec3 get_color(Scene& scene, int obj_id, glm::vec3 start, Intersection inte
                 color += scene.objects[obj_id].color * std::max(glm::dot(inter.norm, r.direction), 0.f) * I;
             }
         }
+        return color;
+    }
+    if (scene.objects[obj_id].material == Material::Metallic) {
+        Ray r = Ray(start, objR.direction - 2.f * inter.norm * glm::dot(inter.norm, objR.direction));
+        r.start += r.direction * eps;
+        auto res = intersection(r, scene, recursion_depth + 1);
+        return scene.objects[obj_id].color * res.second;
     }
     return color;
 }
@@ -73,19 +81,20 @@ bool shadowIntersection(Ray r, Scene& s, float min_dist) {
     return false;
 }
 
-std::pair<std::optional<float>, Color> intersection(Ray r, Scene& s) {
+std::pair<std::optional<float>, glm::vec3> intersection(Ray r, Scene& s, int recursion_depth) {
     std::optional<float> inter = std::nullopt;
     glm::vec3 col = s.bg_color;
+    if (recursion_depth > s.recursion_depth) {
+        return {inter, col};
+    }
     for (int i = 0; i < s.objects.size(); ++i) {
         std::optional<Intersection> res_int  = intersection(r, s.objects[i]);
         if (res_int.has_value() && (!inter.has_value() || inter.value() > res_int.value().t)) {
             inter = res_int.value().t;
-            glm::vec3 point = r.start + r.direction * inter.value();
-            col = get_color(s, i, point, res_int.value());
+            col = get_color(s, i, r, res_int.value(), recursion_depth);
         }
     }
-    Color result_color = Color(convert_color(col.x), convert_color(col.y), convert_color(col.z));
-    return {inter, result_color};
+    return {inter, col};
 }
 
 std::optional<Intersection> intersection(Ray r, Object obj) {
