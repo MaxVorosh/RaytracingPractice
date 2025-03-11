@@ -112,7 +112,7 @@ std::pair<std::optional<float>, glm::vec3> intersection(Ray r, Scene& s, int rec
     std::optional<float> inter = std::nullopt;
     glm::vec3 col = s.bg_color;
     if (recursion_depth == s.recursion_depth) {
-        return {inter, col};
+        return {inter, glm::vec3(0.0)};
     }
     for (int i = 0; i < s.objects.size(); ++i) {
         std::optional<Intersection> res_int  = intersection(r, s.objects[i]);
