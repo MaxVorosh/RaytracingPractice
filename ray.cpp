@@ -21,14 +21,16 @@ int convert_color(float component) {
 }
 
 glm::vec3 get_color(Scene& scene, int obj_id, glm::vec3 start, Intersection inter) {
+    const float eps = 1e-4;
     glm::vec3 color = scene.ambient_light;
     if (scene.objects[obj_id].material == Material::Diffuse) {
         for (auto& light: scene.lights) {
             Ray r;
             glm::vec3 I;
+            float dist = -1;
             if (const PointLightConfig* confVal = std::get_if<PointLightConfig>(&light.config)) {
                 r = Ray(start, glm::normalize(confVal->position - start));
-                float dist = glm::distance(confVal->position, start);
+                dist = glm::distance(confVal->position, start);
                 float att = confVal->attenuation.x + confVal->attenuation.y * dist + confVal->attenuation.z * std::pow(dist, 2);
                 I = light.intensity / att;
             }
@@ -37,7 +39,10 @@ glm::vec3 get_color(Scene& scene, int obj_id, glm::vec3 start, Intersection inte
                 r = Ray(start, conf.direction);
                 I = light.intensity;
             }
-            color += scene.objects[obj_id].color * std::max(glm::dot(inter.norm, r.direction), 0.f) * I;
+            r.start += r.direction * eps;
+            if (!shadowIntersection(r, scene, dist)) {
+                color += scene.objects[obj_id].color * std::max(glm::dot(inter.norm, r.direction), 0.f) * I;
+            }
         }
     }
     return color;
@@ -53,6 +58,19 @@ Ray generate_ray(Scene& scene, int x, int y) {
     float res_y = -(2 * y_c / float(scene.height) - 1) * tan_fov_y;
     glm::vec3 dir = res_x * scene.camera_right + res_y * scene.camera_up + scene.camera_forward;
     return Ray(scene.camera_position, glm::normalize(dir));
+}
+
+bool shadowIntersection(Ray r, Scene& s, float min_dist) {
+    for (int i = 0; i < s.objects.size(); ++i) {
+        std::optional<Intersection> res_int  = intersection(r, s.objects[i]);
+        if (!res_int.has_value()) {
+            continue;
+        }
+        if (min_dist == -1 || min_dist > res_int.value().t) {
+            return true;
+        }
+    }
+    return false;
 }
 
 std::pair<std::optional<float>, Color> intersection(Ray r, Scene& s) {
