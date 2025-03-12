@@ -61,12 +61,43 @@ struct Box {
 
 using Shape = std::variant<Plane, Ellips, Box>;
 
+enum class Material {Diffuse, Metallic, Dielectric};
+
 struct Object {
     Shape shape;
 
     glm::vec3 position = glm::vec3(0, 0, 0);
     glm::quat rotation = glm::quat(1, 0, 0, 0);
     glm::vec3 color;
+    Material material = Material::Diffuse;
+    float ior;
+};
+
+struct DirectLightConfig {
+    glm::vec3 direction;
+
+    DirectLightConfig() = default;
+    DirectLightConfig(glm::vec3 dir) {
+        direction = dir;
+    }
+};
+
+struct PointLightConfig {
+    glm::vec3 position;
+    glm::vec3 attenuation;
+
+    PointLightConfig() = default;
+    PointLightConfig(glm::vec3 pos, glm::vec3 att) {
+        position = pos;
+        attenuation = att;
+    }
+};
+
+using LightConfig = std::variant<PointLightConfig, DirectLightConfig>;
+
+struct Light {
+    glm::vec3 intensity;
+    LightConfig config;
 };
 
 struct Scene {
@@ -78,8 +109,11 @@ struct Scene {
     glm::vec3 camera_up;
     glm::vec3 camera_forward;
     float camera_fov_x;
+    int recursion_depth;
+    glm::vec3 ambient_light;
 
     std::vector<Object> objects;
+    std::vector<Light> lights;
 
     Scene() = default;
 };
@@ -92,5 +126,17 @@ struct Ray {
     Ray(glm::vec3 s, glm::vec3 d) {
         start = s;
         direction = d;
+    }
+};
+
+struct Intersection {
+    float t;
+    glm::vec3 norm;
+    bool is_inside;
+
+    Intersection(float _t, glm::vec3 n, bool inside) {
+        t = _t;
+        norm = n;
+        is_inside = inside;
     }
 };

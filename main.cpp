@@ -8,8 +8,10 @@ void fill_scene(Scene& scene, ScenePixels& result_scene) {
     for (int i = 0; i < result_scene.width; ++i) {
         for (int j = 0; j < result_scene.height; ++j) {
             Ray r = generate_ray(scene, i, j);
-            auto inter = intersection(r, scene);
-            result_scene.pixels[i + j * result_scene.width] = inter.second;
+            auto inter = intersection(r, scene, 0);
+            glm::vec3 col = inter.second;
+            Color result_color = Color(convert_color(col.x), convert_color(col.y), convert_color(col.z));
+            result_scene.pixels[i + j * result_scene.width] = result_color;
         }
     }
 }
