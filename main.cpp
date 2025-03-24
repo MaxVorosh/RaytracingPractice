@@ -7,11 +7,16 @@
 void fill_scene(Scene& scene, ScenePixels& result_scene) {
     for (int i = 0; i < result_scene.width; ++i) {
         for (int j = 0; j < result_scene.height; ++j) {
-            Ray r = generate_ray(scene, i, j);
-            auto inter = intersection(r, scene, 0);
-            glm::vec3 col = inter.second;
-            Color result_color = Color(convert_color(col.x), convert_color(col.y), convert_color(col.z));
-            result_scene.pixels[i + j * result_scene.width] = result_color;
+            glm::vec3 result_color;
+            for (int k = 0; k < scene.samples; ++k) {
+                Ray r = generate_ray(scene, i, j);
+                auto inter = intersection(r, scene, 0);
+                glm::vec3 col = inter.second;
+                result_color += col;
+            }
+            result_color /= float(scene.samples);
+            Color converted_color = Color(convert_color(result_color.x), convert_color(result_color.y), convert_color(result_color.z));
+            result_scene.pixels[i + j * result_scene.width] = converted_color;
         }
     }
 }

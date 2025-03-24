@@ -24,40 +24,18 @@ glm::vec3 get_color(Scene& scene, int obj_id, Ray objR, Intersection inter, int 
     const float eps = 1e-4;
     glm::vec3 start = objR.start + objR.direction * inter.t;
     if (scene.objects[obj_id].material == Material::Diffuse) {
-        glm::vec3 color = scene.ambient_light * scene.objects[obj_id].color;
-        for (auto& light: scene.lights) {
-            Ray r;
-            glm::vec3 I;
-            float dist = -1;
-            if (const PointLightConfig* confVal = std::get_if<PointLightConfig>(&light.config)) {
-                r = Ray(start, glm::normalize(confVal->position - start));
-                dist = glm::distance(confVal->position, start);
-                float att = confVal->attenuation.x + confVal->attenuation.y * dist + confVal->attenuation.z * std::pow(dist, 2);
-                I = light.intensity / att;
-            }
-            else {
-                DirectLightConfig conf = std::get<DirectLightConfig>(light.config);
-                r = Ray(start, conf.direction);
-                I = light.intensity;
-            }
-            r.start += r.direction * eps;
-            if (!shadowIntersection(r, scene, dist)) {
-                color += scene.objects[obj_id].color * std::max(glm::dot(inter.norm, r.direction), 0.f) * I;
-            }
-        }
-        return color;
+        Ray r = Ray(start, scene.generate_random_reflect(inter.norm));
+        glm::vec3 color = intersection(r, scene, recursion_depth + 1).second;
+        float cosine = glm::dot(inter.norm, r.direction);
+        return scene.objects[obj_id].emission + 2.f * scene.objects[obj_id].color * color * cosine;
     }
     if (scene.objects[obj_id].material == Material::Metallic) {
         Ray r = Ray(start, objR.direction - 2.f * inter.norm * glm::dot(inter.norm, objR.direction));
         r.start += r.direction * eps;
         auto res = intersection(r, scene, recursion_depth + 1);
-        return scene.objects[obj_id].color * res.second;
+        return scene.objects[obj_id].color * res.second + scene.objects[obj_id].emission;
     }
     if (scene.objects[obj_id].material == Material::Dielectric) {
-        Ray reflected = Ray(start, objR.direction - 2.f * inter.norm * glm::dot(inter.norm, objR.direction));
-        reflected.start += reflected.direction * eps;
-        glm::vec3 reflected_color = intersection(reflected, scene, recursion_depth + 1).second;
-
         float cosine1 = glm::dot(-objR.direction, inter.norm);
         float n1 = 1;
         float n2 = scene.objects[obj_id].ior;
@@ -65,20 +43,30 @@ glm::vec3 get_color(Scene& scene, int obj_id, Ray objR, Intersection inter, int 
             std::swap(n1, n2);
         }
         float sine2 = n1 / n2 * sqrt(1 - pow(cosine1, 2));
-        if (abs(sine2) > 1) {
-            return reflected_color;
+
+        float R0 = pow((n1 - n2) / (n1 + n2), 2);
+        float R = R0 + (1 - R0) * pow(1 - cosine1, 5);
+
+        float ray_choose = scene.generate_random_uniform(0, 1);
+
+        if (std::abs(sine2) > 1 || ray_choose < R) {
+            Ray reflected = Ray(start, objR.direction - 2.f * inter.norm * glm::dot(inter.norm, objR.direction));
+            reflected.start += reflected.direction * eps;
+            glm::vec3 reflected_color = intersection(reflected, scene, recursion_depth + 1).second;
+            if (inter.is_inside) {
+                return reflected_color;
+            }
+            return reflected_color + scene.objects[obj_id].emission;
         }
         float cosine2 = sqrt(1 - pow(sine2, 2));
         Ray refracted = Ray(start, n1 / n2 * objR.direction + (n1 / n2 * cosine1 - cosine2) * inter.norm);
         refracted.start += refracted.direction * eps;
         glm::vec3 refracted_color = intersection(refracted, scene, recursion_depth + 1).second;
 
-        float R0 = pow((n1 - n2) / (n1 + n2), 2);
-        float R = R0 + (1 - R0) * pow(1 - cosine1, 5);
         if (inter.is_inside) {
-            return R * reflected_color + (1 - R) * refracted_color;
+            return refracted_color;
         }
-        return R * reflected_color + (1 - R) * refracted_color * scene.objects[obj_id].color;
+        return refracted_color * scene.objects[obj_id].color + scene.objects[obj_id].emission;
     }
     return glm::vec3(0.0);
 }
@@ -87,8 +75,10 @@ Ray generate_ray(Scene& scene, int x, int y) {
     float aspect_ratio = scene.width / float(scene.height);
     float tan_fov_x = std::tan(scene.camera_fov_x / 2.0);
     float tan_fov_y = tan_fov_x / aspect_ratio;
-    float x_c = float(x) + 0.5;
-    float y_c = float(y) + 0.5;
+    float add_x = scene.generate_random_uniform(0, 1);
+    float add_y = scene.generate_random_uniform(0, 1);
+    float x_c = float(x) + add_x;
+    float y_c = float(y) + add_y;
     float res_x = (2 * x_c / float(scene.width) - 1) * tan_fov_x;
     float res_y = -(2 * y_c / float(scene.height) - 1) * tan_fov_y;
     glm::vec3 dir = res_x * scene.camera_right + res_y * scene.camera_up + scene.camera_forward;
@@ -219,11 +209,11 @@ std::optional<Intersection> intersection(Ray r, Box b) {
     }
     glm::vec3 point = r.start + r.direction * t;
     glm::vec3 norm = point / b.size;
-    if (abs(norm.x) >= abs(norm.y) && abs(norm.x) >= abs(norm.z)) {
+    if (std::abs(norm.x) >= std::abs(norm.y) && std::abs(norm.x) >= std::abs(norm.z)) {
         norm.y = 0;
         norm.z = 0;
     }
-    else if (abs(norm.y) >= abs(norm.z)) {
+    else if (std::abs(norm.y) >= std::abs(norm.z)) {
        norm.x = 0;
        norm.z = 0;
     }

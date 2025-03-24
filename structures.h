@@ -1,5 +1,6 @@
 #include <vector>
 #include <variant>
+#include <random>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -88,7 +89,12 @@ struct Scene {
 
     std::vector<Object> objects;
 
+    std::minstd_rand g = std::minstd_rand(42);
+
     Scene() = default;
+
+    glm::vec3 generate_random_reflect(glm::vec3 norm);
+    float generate_random_uniform(float a, float b);
 };
 
 struct Ray {
