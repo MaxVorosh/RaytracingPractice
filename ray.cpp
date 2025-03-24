@@ -25,6 +25,7 @@ glm::vec3 get_color(Scene& scene, int obj_id, Ray objR, Intersection inter, int 
     glm::vec3 start = objR.start + objR.direction * inter.t;
     if (scene.objects[obj_id].material == Material::Diffuse) {
         Ray r = Ray(start, scene.generate_random_reflect(inter.norm));
+        r.start += r.direction * eps;
         glm::vec3 color = intersection(r, scene, recursion_depth + 1).second;
         float cosine = glm::dot(inter.norm, r.direction);
         return scene.objects[obj_id].emission + 2.f * scene.objects[obj_id].color * color * cosine;
