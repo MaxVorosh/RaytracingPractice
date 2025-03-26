@@ -86,31 +86,24 @@ Ray generate_ray(Scene& scene, int x, int y) {
     return Ray(scene.camera_position, glm::normalize(dir));
 }
 
-bool shadowIntersection(Ray r, Scene& s, float min_dist) {
-    for (int i = 0; i < s.objects.size(); ++i) {
-        std::optional<Intersection> res_int  = intersection(r, s.objects[i]);
-        if (!res_int.has_value()) {
-            continue;
-        }
-        if (min_dist == -1 || min_dist > res_int.value().t) {
-            return true;
-        }
-    }
-    return false;
-}
-
 std::pair<std::optional<float>, glm::vec3> intersection(Ray r, Scene& s, int recursion_depth) {
     std::optional<float> inter = std::nullopt;
     glm::vec3 col = s.bg_color;
     if (recursion_depth == s.recursion_depth) {
         return {inter, glm::vec3(0.0)};
     }
+    int obj_id = -1;
+    std::optional<Intersection> full_inter = std::nullopt;
     for (int i = 0; i < s.objects.size(); ++i) {
         std::optional<Intersection> res_int  = intersection(r, s.objects[i]);
         if (res_int.has_value() && (!inter.has_value() || inter.value() > res_int.value().t)) {
             inter = res_int.value().t;
-            col = get_color(s, i, r, res_int.value(), recursion_depth);
+            full_inter = res_int;
+            obj_id = i;
         }
+    }
+    if (full_inter.has_value()) {
+        col = get_color(s, obj_id, r, full_inter.value(), recursion_depth);
     }
     return {inter, col};
 }
