@@ -1,5 +1,6 @@
 #include <vector>
 #include <variant>
+#include <random>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -69,35 +70,9 @@ struct Object {
     glm::vec3 position = glm::vec3(0, 0, 0);
     glm::quat rotation = glm::quat(1, 0, 0, 0);
     glm::vec3 color;
+    glm::vec3 emission;
     Material material = Material::Diffuse;
     float ior;
-};
-
-struct DirectLightConfig {
-    glm::vec3 direction;
-
-    DirectLightConfig() = default;
-    DirectLightConfig(glm::vec3 dir) {
-        direction = dir;
-    }
-};
-
-struct PointLightConfig {
-    glm::vec3 position;
-    glm::vec3 attenuation;
-
-    PointLightConfig() = default;
-    PointLightConfig(glm::vec3 pos, glm::vec3 att) {
-        position = pos;
-        attenuation = att;
-    }
-};
-
-using LightConfig = std::variant<PointLightConfig, DirectLightConfig>;
-
-struct Light {
-    glm::vec3 intensity;
-    LightConfig config;
 };
 
 struct Scene {
@@ -110,12 +85,16 @@ struct Scene {
     glm::vec3 camera_forward;
     float camera_fov_x;
     int recursion_depth;
-    glm::vec3 ambient_light;
+    int samples;
 
     std::vector<Object> objects;
-    std::vector<Light> lights;
+
+    std::minstd_rand g = std::minstd_rand(42);
 
     Scene() = default;
+
+    glm::vec3 generate_random_reflect(glm::vec3 norm);
+    float generate_random_uniform(float a, float b);
 };
 
 struct Ray {
