@@ -104,5 +104,11 @@ Scene parse(std::string filename) {
             sin >> scene.samples;
         }
     }
+    scene.dist = MixDistribution(CosineDistribution(42), 32);
+    for (int i = 0; i < scene.objects.size(); ++i) {
+        if (scene.objects[i].emission != glm::vec3(0.0)) {
+            scene.dist.add_light(LightDistribution(44 + i, scene.objects[i]));
+        }
+    }
     return scene;
 }

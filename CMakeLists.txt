@@ -16,7 +16,9 @@ add_executable(raytracing main.cpp
     structures.h
     ray.cpp
     ray.h
-    scene.cpp
+    distribution.cpp
+    distribution.h
+    scene.h
 )
 
 target_include_directories(raytracing PUBLIC .)

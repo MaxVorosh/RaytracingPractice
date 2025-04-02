@@ -1,4 +1,4 @@
-#include "structures.h"
+#include "scene.h"
 #include <string>
 
 #pragma once

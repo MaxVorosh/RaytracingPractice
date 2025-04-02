@@ -1,4 +1,4 @@
-#include "ray.h"
+#include "scene.h"
 #include <math.h>
 #include <algorithm>
 #include <iostream>
@@ -24,11 +24,12 @@ glm::vec3 get_color(Scene& scene, int obj_id, Ray objR, Intersection inter, int 
     const float eps = 1e-4;
     glm::vec3 start = objR.start + objR.direction * inter.t;
     if (scene.objects[obj_id].material == Material::Diffuse) {
-        Ray r = Ray(start, scene.generate_random_reflect(inter.norm));
+        glm::vec3 s = scene.dist.sample(start, inter.norm);
+        Ray r = Ray(start, s);
         r.start += r.direction * eps;
         glm::vec3 color = intersection(r, scene, recursion_depth + 1).second;
         float cosine = glm::dot(inter.norm, r.direction);
-        return scene.objects[obj_id].emission + 2.f * scene.objects[obj_id].color * color * cosine;
+        return scene.objects[obj_id].emission + scene.objects[obj_id].color / 3.14f * color * cosine / scene.dist.pdf(start, inter.norm, s);
     }
     if (scene.objects[obj_id].material == Material::Metallic) {
         Ray r = Ray(start, objR.direction - 2.f * inter.norm * glm::dot(inter.norm, objR.direction));

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include "parser.h"
-#include "ray.h"
+#include "scene.h"
 #include "image_writer.h"
 
 void fill_scene(Scene& scene, ScenePixels& result_scene) {
