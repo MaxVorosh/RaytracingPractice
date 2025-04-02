@@ -1,3 +1,4 @@
+#include <iostream>
 #include <variant>
 #include <optional>
 #include <glm/gtx/quaternion.hpp>
@@ -97,11 +98,11 @@ float LightDistribution::pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d) {
     }
     Ray r2 = Ray(point + d * inter.t + eps, d);
     std::optional<Intersection> raw_inter2 = intersection(r2, obj);
-    float mult1 = inter.t * inter.t / glm::dot(d, inter.norm);
+    float mult1 = inter.t * inter.t / std::abs(glm::dot(d, inter.norm));
     float mult2 = 0;
     if (raw_inter2.has_value()) {
         Intersection inter2 = raw_inter2.value();
-        mult2 = (inter2.t * inter2.t) / glm::dot(d, inter2.norm);
+        mult2 = (inter2.t * inter2.t) / std::abs(glm::dot(d, inter2.norm));
     }
     if (isBox) {
         p += pdfBox() * mult1;
@@ -154,7 +155,7 @@ float MixDistribution::pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d) {
     float p = 0.5 * cosine.pdf(point, norm, d);
     int N = lights.size();
     for (int i = 0; i < N; ++i) {
-        p += 0.5 * N * lights[i].pdf(point, norm, d);
+        p += 0.5 / float(N) * lights[i].pdf(point, norm, d);
     }
     return p;
 }

@@ -29,7 +29,8 @@ glm::vec3 get_color(Scene& scene, int obj_id, Ray objR, Intersection inter, int 
         r.start += r.direction * eps;
         glm::vec3 color = intersection(r, scene, recursion_depth + 1).second;
         float cosine = glm::dot(inter.norm, r.direction);
-        return scene.objects[obj_id].emission + scene.objects[obj_id].color / 3.14f * color * cosine / scene.dist.pdf(start, inter.norm, s);
+        float p = scene.dist.pdf(start, inter.norm, s);
+        return scene.objects[obj_id].emission + scene.objects[obj_id].color / 3.14f * color * cosine / p;
     }
     if (scene.objects[obj_id].material == Material::Metallic) {
         Ray r = Ray(start, objR.direction - 2.f * inter.norm * glm::dot(inter.norm, objR.direction));
