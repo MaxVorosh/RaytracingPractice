@@ -42,7 +42,7 @@ glm::vec3 LightDistribution::sample(glm::vec3 point, glm::vec3 norm) {
 }
 
 glm::vec3 LightDistribution::box_sample(glm::vec3 point, glm::vec3 norm, glm::vec3 size) {
-    float w = 4 * (size.x * size.y + size.x * size.z + size.y * size.z);
+    float w = size.x * size.y + size.x * size.z + size.y * size.z;
     std::uniform_real_distribution<> dist(0, w);
     float r = dist(g);
 
@@ -59,7 +59,7 @@ glm::vec3 LightDistribution::box_sample(glm::vec3 point, glm::vec3 norm, glm::ve
     if (r < size.x * size.y) {
         z = size.z * sign;
     }
-    else if (r < size.x * size.y + size.x * size.z) {
+    else if (r < (size.x * size.y + size.x * size.z)) {
         y = size.y * sign;
     }
     else {
