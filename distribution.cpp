@@ -96,7 +96,7 @@ float LightDistribution::pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d) {
     if (Box* bval = std::get_if<Box>(&obj.shape)) {
         isBox = true;
     }
-    Ray r2 = Ray(point + d * inter.t + norm * eps + inter.norm * eps, d);
+    Ray r2 = Ray(point + d * inter.t + norm * eps - inter.norm * eps, d);
     std::optional<Intersection> raw_inter2 = intersection(r2, obj);
     float mult1 = inter.t * inter.t / std::abs(glm::dot(d, inter.norm));
     float mult2 = 0;
