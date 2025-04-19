@@ -12,6 +12,15 @@ void fill_scene(Scene& scene, ScenePixels& result_scene) {
                 Ray r = generate_ray(scene, i, j);
                 auto inter = intersection(r, scene, 0);
                 glm::vec3 col = inter.second;
+                if (std::isnan(col.x)) {
+                    col.x = 0;
+                }
+                if (std::isnan(col.y)) {
+                    col.y = 0;
+                }
+                if (std::isnan(col.z)) {
+                    col.z = 0;
+                }
                 result_color += col;
             }
             result_color /= float(scene.samples);
