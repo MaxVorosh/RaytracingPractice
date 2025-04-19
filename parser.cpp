@@ -105,13 +105,13 @@ Scene parse(std::string filename) {
         }
     }
     scene.dist = MixDistribution(CosineDistribution(42), 32);
-    for (int i = 0; i < scene.objects.size(); ++i) {
-        if (scene.objects[i].emission != glm::vec3(0.0)) {
-            if (Plane* pval = std::get_if<Plane>(&scene.objects[i].shape)) {
-                continue;
-            }
-            scene.dist.add_light(LightDistribution(44 + i, scene.objects[i]));
-        }
-    }
+    // for (int i = 0; i < scene.objects.size(); ++i) {
+    //     if (scene.objects[i].emission != glm::vec3(0.0)) {
+    //         if (Plane* pval = std::get_if<Plane>(&scene.objects[i].shape)) {
+    //             continue;
+    //         }
+    //         scene.dist.add_light(LightDistribution(44 + i, scene.objects[i]));
+    //     }
+    // }
     return scene;
 }
