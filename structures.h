@@ -70,7 +70,7 @@ struct Object {
     glm::vec3 position = glm::vec3(0, 0, 0);
     glm::quat rotation = glm::quat(1, 0, 0, 0);
     glm::vec3 color;
-    glm::vec3 emission;
+    glm::vec3 emission = glm::vec3(0.0);
     Material material = Material::Diffuse;
     float ior;
 };

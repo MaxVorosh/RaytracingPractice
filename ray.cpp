@@ -28,7 +28,7 @@ glm::vec3 get_color(Scene& scene, int obj_id, Ray objR, Intersection inter, int 
             return glm::vec3(0.0);
         }
         glm::vec3 s = scene.dist.sample(start, inter.norm);
-        if (glm::dot(s, inter.norm) < 0) {
+        if (glm::dot(s, inter.norm) <= 0) {
             return scene.objects[obj_id].emission;
         }
         Ray r = Ray(start, s);
