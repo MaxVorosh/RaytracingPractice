@@ -23,11 +23,11 @@ struct Scene {
     std::vector<Object> objects;
 
     MixDistribution dist;
+    std::minstd_rand g = std::minstd_rand(239);
 
     Scene() = default;
 
     float generate_random_uniform(float a, float b) {
-        std::minstd_rand g = std::minstd_rand(239);
         std::uniform_real_distribution<> dist(a, b);
         return dist(g);
     }
