@@ -121,7 +121,7 @@ float LightDistribution::pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d) {
 float LightDistribution::pdfBox() {
     Box bval = std::get<Box>(obj.shape);
     glm::vec3 size = bval.size;
-    float w = 4 * (size.x * size.y + size.x * size.z + size.y * size.z);
+    float w = 8 * (size.x * size.y + size.x * size.z + size.y * size.z);
     return 1 / w;
 }
 
@@ -129,7 +129,7 @@ float LightDistribution::pdfEllips(glm::vec3 norm) {
     Ellips eval = std::get<Ellips>(obj.shape);
     glm::vec3 radius = eval.radius;
     glm::vec3 smth = glm::vec3(norm.x * radius.y * radius.z, radius.x * norm.y * radius.z, radius.x * radius.y * norm.z);
-    return 1 / sqrt(4 * 3.14 * glm::length2(smth));
+    return 1 / (4 * 3.14 * glm::length(smth));
 }
 
 MixDistribution::MixDistribution(CosineDistribution cosine, int seed) : Distribution(seed) {
