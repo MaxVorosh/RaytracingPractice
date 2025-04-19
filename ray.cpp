@@ -95,9 +95,6 @@ Ray generate_ray(Scene& scene, int x, int y) {
 }
 
 std::pair<std::optional<float>, glm::vec3> intersection(Ray r, Scene& s, int recursion_depth) {
-    if (recursion_depth < 0) {
-        return {std::nullopt, glm::vec3(0.0)};
-    }
     std::optional<float> inter = std::nullopt;
     glm::vec3 col = s.bg_color;
     if (recursion_depth == s.recursion_depth) {
