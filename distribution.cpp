@@ -85,7 +85,7 @@ glm::vec3 LightDistribution::ellips_sample(glm::vec3 point, glm::vec3 norm, glm:
 
 float LightDistribution::pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d) {
     const float eps = 1e-4;
-    Ray r = Ray(point + d * eps, d);
+    Ray r = Ray(point + norm * eps, d);
     std::optional<Intersection> raw_inter = intersection(r, obj);
     if (!raw_inter.has_value()) {
         return 0;
@@ -96,7 +96,7 @@ float LightDistribution::pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d) {
     if (Box* bval = std::get_if<Box>(&obj.shape)) {
         isBox = true;
     }
-    Ray r2 = Ray(point + d * (inter.t + 2 * eps), d);
+    Ray r2 = Ray(point + d * inter.t + norm * eps + inter.norm * eps, d);
     std::optional<Intersection> raw_inter2 = intersection(r2, obj);
     float mult1 = inter.t * inter.t / std::abs(glm::dot(d, inter.norm));
     float mult2 = 0;
@@ -129,7 +129,7 @@ float LightDistribution::pdfEllips(glm::vec3 norm) {
     Ellips eval = std::get<Ellips>(obj.shape);
     glm::vec3 radius = eval.radius;
     glm::vec3 smth = glm::vec3(norm.x * radius.y * radius.z, radius.x * norm.y * radius.z, radius.x * radius.y * norm.z);
-    return 1 / (4 * glm::length(smth));
+    return 1 / (4 * 3.14 * glm::length(smth));
 }
 
 MixDistribution::MixDistribution(CosineDistribution cosine, int seed) : Distribution(seed) {

@@ -32,7 +32,7 @@ glm::vec3 get_color(Scene& scene, int obj_id, Ray objR, Intersection inter, int 
             return scene.objects[obj_id].emission;
         }
         Ray r = Ray(start, s);
-        r.start += r.direction * eps;
+        r.start += inter.norm * eps;
         glm::vec3 color = intersection(r, scene, recursion_depth + 1).second;
         float cosine = glm::dot(inter.norm, s);
         float p = scene.dist.pdf(start, inter.norm, s);
