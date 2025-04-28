@@ -60,7 +60,20 @@ struct Box {
     }
 };
 
-using Shape = std::variant<Plane, Ellips, Box>;
+struct Triangle {
+    glm::vec3 a;
+    glm::vec3 b;
+    glm::vec3 c;
+
+    Triangle() = default;
+    Triangle(glm::vec3 _x, glm::vec3 _y, glm::vec3 _z) {
+        a = _x;
+        b = _y;
+        c = _z;
+    }
+};
+
+using Shape = std::variant<Plane, Ellips, Box, Triangle>;
 
 enum class Material {Diffuse, Metallic, Dielectric};
 

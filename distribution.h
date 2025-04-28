@@ -39,7 +39,9 @@ struct LightDistribution : public Distribution {
     private:
     glm::vec3 box_sample(glm::vec3 point, glm::vec3 norm, glm::vec3 size);
     glm::vec3 ellips_sample(glm::vec3 point, glm::vec3 norm, glm::vec3 radius);
+    glm::vec3 triangle_sample(glm::vec3 point, glm::vec3 a, glm::vec3 b, glm::vec3 c);
     float pdfBox();
+    float pdfTriangle();
     float pdfEllips(glm::vec3 norm);
 };
 

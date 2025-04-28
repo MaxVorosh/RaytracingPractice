@@ -32,4 +32,5 @@ struct Intersection {
 std::optional<Intersection> intersection(Ray r, Plane p);
 std::optional<Intersection> intersection(Ray r, Ellips e);
 std::optional<Intersection> intersection(Ray r, Box b);
+std::optional<Intersection> intersection(Ray r, Triangle t);
 std::optional<Intersection> intersection(Ray r, Object obj);

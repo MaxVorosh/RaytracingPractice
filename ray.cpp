@@ -24,9 +24,6 @@ glm::vec3 get_color(Scene& scene, int obj_id, Ray objR, Intersection inter, int 
     const float eps = 1e-4;
     glm::vec3 start = objR.start + objR.direction * inter.t;
     if (scene.objects[obj_id].material == Material::Diffuse) {
-        if (inter.is_inside) {
-            return glm::vec3(0.0);
-        }
         glm::vec3 s = scene.dist.sample(start, inter.norm);
         if (glm::dot(s, inter.norm) <= 0) {
             return scene.objects[obj_id].emission;
@@ -224,6 +221,28 @@ std::optional<Intersection> intersection(Ray r, Box b) {
         norm.y = 0;
     }
     norm = glm::normalize(norm);
+    bool is_inside = false;
+    if (glm::dot(r.direction, norm) > 0) {
+        is_inside = true;
+        norm *= -1;
+    }
+    return Intersection(t, norm, is_inside);
+}
+
+std::optional<Intersection> intersection(Ray r, Triangle tr) {
+    glm::mat3x3 m = glm::mat3x3(tr.b - tr.a, tr.c - tr.a, -r.direction);
+    m = glm::inverse(glm::transpose(m));
+    glm::vec3 res = (r.start - tr.a) * m;
+    float u = res.x;
+    float v = res.y;
+    float t = res.z;
+    if (t < 0) {
+        return std::nullopt;
+    }
+    if (!(u >= 0 && v >= 0 && u + v <= 1)) {
+        return std::nullopt;
+    }
+    glm::vec3 norm = glm::cross(tr.b - tr.a, tr.c - tr.a);
     bool is_inside = false;
     if (glm::dot(r.direction, norm) > 0) {
         is_inside = true;

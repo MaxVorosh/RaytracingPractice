@@ -61,6 +61,11 @@ Scene parse(std::string filename) {
             sin >> rx >> ry >> rz;
             scene.objects.back().shape = Ellips(glm::vec3(rx, ry, rz));
         }
+        else if (command == "TRIANGLE") {
+            float x1, y1, z1, x2, y2, z2, x3, y3, z3;
+            sin >> x1 >> y1 >> z1 >> x2 >> y2 >> z2 >> x3 >> y3 >> z3;
+            scene.objects.back().shape = Triangle(glm::vec3(x1, y1, z1), glm::vec3(x2, y2, z2), glm::vec3(x3, y3, z3));
+        }
         else if (command == "BOX") {
             float sx, sy, sz;
             sin >> sx >> sy >> sz;

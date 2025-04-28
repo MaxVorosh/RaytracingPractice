@@ -36,9 +36,26 @@ glm::vec3 LightDistribution::sample(glm::vec3 point, glm::vec3 norm) {
         glm::vec3 size = bval->size;
         return box_sample(point, norm, size);
     }
+    if (Triangle* tval = std::get_if<Triangle>(&obj.shape)) {
+        return triangle_sample(point, tval->a, tval->b, tval->c);
+    }
     Ellips eval = std::get<Ellips>(obj.shape);
     glm::vec3 radius = eval.radius;
     return ellips_sample(point, norm, radius);
+}
+
+glm::vec3 LightDistribution::triangle_sample(glm::vec3 point, glm::vec3 a, glm::vec3 b, glm::vec3 c) {
+    std::uniform_real_distribution<> dist(0, 1);
+    float u = dist(g);
+    float v = dist(g);
+    if (u + v > 1) {
+        u = 1 - u;
+        v = 1 - v;
+    }
+    glm::vec3 objPoint = a + (b - a) * u + (c - a) * v;
+    objPoint = obj.rotation * objPoint;
+    objPoint += obj.position;
+    return glm::normalize(objPoint - point);
 }
 
 glm::vec3 LightDistribution::box_sample(glm::vec3 point, glm::vec3 norm, glm::vec3 size) {
@@ -93,8 +110,12 @@ float LightDistribution::pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d) {
     float p = 0;
     Intersection inter = raw_inter.value();
     bool isBox = false;
+    bool isTriangle = false;
     if (Box* bval = std::get_if<Box>(&obj.shape)) {
         isBox = true;
+    }
+    if (Triangle* tval = std::get_if<Triangle>(&obj.shape)) {
+        isTriangle = true;
     }
     Ray r2 = Ray(point + d * inter.t + norm * eps - inter.norm * eps, d);
     std::optional<Intersection> raw_inter2 = intersection(r2, obj);
@@ -107,6 +128,10 @@ float LightDistribution::pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d) {
     if (isBox) {
         p += pdfBox() * mult1;
         p += pdfBox() * mult2;
+    }
+    else if (isTriangle) {
+        p += pdfTriangle() * mult1;
+        p += pdfTriangle() * mult2;
     }
     else {
         p += pdfEllips(inter.norm) * mult1;
@@ -123,6 +148,12 @@ float LightDistribution::pdfBox() {
     glm::vec3 size = bval.size;
     float w = 8 * (size.x * size.y + size.x * size.z + size.y * size.z);
     return 1 / w;
+}
+
+float LightDistribution::pdfTriangle() {
+    Triangle tval = std::get<Triangle>(obj.shape);
+    float s = 0.5f * glm::length(glm::cross(tval.b - tval.a, tval.c - tval.a));
+    return 1 / s;
 }
 
 float LightDistribution::pdfEllips(glm::vec3 norm) {
