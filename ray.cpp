@@ -20,31 +20,31 @@ int convert_color(float component) {
     return std::round(std::clamp(component * 255, 0.f, 255.f));
 }
 
-glm::vec3 get_color(Scene& scene, int obj_id, Ray objR, Intersection inter, int recursion_depth) {
+glm::vec3 get_color(Scene& scene, Object obj, Ray objR, Intersection inter, int recursion_depth) {
     const float eps = 1e-4;
     glm::vec3 start = objR.start + objR.direction * inter.t;
-    if (scene.objects[obj_id].material == Material::Diffuse) {
+    if (obj.material == Material::Diffuse) {
         glm::vec3 s = scene.dist.sample(start, inter.norm);
         if (glm::dot(s, inter.norm) <= 0) {
-            return scene.objects[obj_id].emission;
+            return obj.emission;
         }
         Ray r = Ray(start, s);
         r.start += inter.norm * eps;
         glm::vec3 color = intersection(r, scene, recursion_depth + 1).second;
         float cosine = glm::dot(inter.norm, s);
         float p = scene.dist.pdf(start, inter.norm, s);
-        return scene.objects[obj_id].emission + scene.objects[obj_id].color / 3.14f * color * cosine / p;
+        return obj.emission + obj.color / 3.14f * color * cosine / p;
     }
-    if (scene.objects[obj_id].material == Material::Metallic) {
+    if (obj.material == Material::Metallic) {
         Ray r = Ray(start, objR.direction - 2.f * inter.norm * glm::dot(inter.norm, objR.direction));
         r.start += r.direction * eps;
         auto res = intersection(r, scene, recursion_depth + 1);
-        return scene.objects[obj_id].color * res.second + scene.objects[obj_id].emission;
+        return obj.color * res.second + obj.emission;
     }
-    if (scene.objects[obj_id].material == Material::Dielectric) {
+    if (obj.material == Material::Dielectric) {
         float cosine1 = glm::dot(-objR.direction, inter.norm);
         float n1 = 1;
-        float n2 = scene.objects[obj_id].ior;
+        float n2 = obj.ior;
         if (inter.is_inside) {
             std::swap(n1, n2);
         }
@@ -62,7 +62,7 @@ glm::vec3 get_color(Scene& scene, int obj_id, Ray objR, Intersection inter, int 
             if (inter.is_inside) {
                 return reflected_color;
             }
-            return reflected_color + scene.objects[obj_id].emission;
+            return reflected_color + obj.emission;
         }
         float cosine2 = sqrt(1 - pow(sine2, 2));
         Ray refracted = Ray(start, n1 / n2 * objR.direction + (n1 / n2 * cosine1 - cosine2) * inter.norm);
@@ -72,7 +72,7 @@ glm::vec3 get_color(Scene& scene, int obj_id, Ray objR, Intersection inter, int 
         if (inter.is_inside) {
             return refracted_color;
         }
-        return refracted_color * scene.objects[obj_id].color + scene.objects[obj_id].emission;
+        return refracted_color * obj.color + obj.emission;
     }
     return glm::vec3(0.0);
 }
@@ -95,20 +95,24 @@ std::pair<std::optional<float>, glm::vec3> intersection(Ray r, Scene& s, int rec
     std::optional<float> inter = std::nullopt;
     glm::vec3 col = s.bg_color;
     if (recursion_depth == s.recursion_depth) {
-        return {inter, glm::vec3(0.0)};
+        return {std::nullopt, glm::vec3(0.0)};
     }
-    int obj_id = -1;
-    std::optional<Intersection> full_inter = std::nullopt;
-    for (int i = 0; i < s.objects.size(); ++i) {
-        std::optional<Intersection> res_int  = intersection(r, s.objects[i]);
+    auto res = s.objects.intersect(r);
+    auto full_inter = res.first;
+    std::optional<Object> obj = res.second;
+    if (full_inter.has_value()) {
+        inter = full_inter.value().t;
+    }
+    for (int i = 0; i < s.planes.size(); ++i) {
+        std::optional<Intersection> res_int  = intersection(r, s.planes[i]);
         if (res_int.has_value() && (!inter.has_value() || inter.value() > res_int.value().t)) {
             inter = res_int.value().t;
             full_inter = res_int;
-            obj_id = i;
+            obj = s.planes[i];
         }
     }
     if (full_inter.has_value()) {
-        col = get_color(s, obj_id, r, full_inter.value(), recursion_depth);
+        col = get_color(s, obj.value(), r, full_inter.value(), recursion_depth);
     }
     return {inter, col};
 }

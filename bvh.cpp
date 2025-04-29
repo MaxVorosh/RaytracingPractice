@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iostream>
 #include "bvh.h"
 
 float get_score(std::pair<glm::vec3, glm::vec3> aabb) {
@@ -38,16 +39,24 @@ BVH::BVH() {
     root = -1;
 }
 
-void BVH::build_node(std::vector<Object>& objects, int l, int r) {
+void BVH::build_node(std::vector<Object>& objects) {
+    this->objects = objects;
+    root = 0;
+    nodes.push_back(Node());
+    build_node(0, objects.size());
+    std::cout << nodes.size() << std::endl;
+    std::cout << nodes[0].left << ' ' << nodes[0].right << std::endl;
+    std::cout << this->objects[0].position.y << std::endl;
+    std::cout << nodes[0].is_leaf << std::endl;
+}
+
+void BVH::build_node(int l, int r) {
     auto aabb = objects[l].aabb();
     std::vector<glm::vec3> p(4);
     for (int i = l + 1; i < r; ++i) {
         auto aabb2 = objects[i].aabb();
         p = {aabb.first, aabb.second, aabb2.first, aabb2.second};
         aabb = raw_aabb(p);
-    }
-    if (root == -1) {
-        nodes.push_back(Node());
     }
     nodes.back().minim = aabb.first;
     nodes.back().maxim = aabb.second;
@@ -107,11 +116,71 @@ void BVH::build_node(std::vector<Object>& objects, int l, int r) {
     if (best_axis == 1) {
         std::sort(objects.begin() + l, objects.begin() + r, sort_y);
     }
+    int node_ind = nodes.size() - 1;
     nodes.back().is_leaf = false;
     nodes.back().left = nodes.size();
     nodes.push_back(Node());
-    build_node(objects, l, ind);
-    nodes.back().right = nodes.size();
+    build_node(l, ind);
+    nodes[ind].right = nodes.size();
     nodes.push_back(Node());
-    build_node(objects, ind, r);
+    build_node(ind, r);
+}
+
+std::pair<std::optional<Intersection>, std::optional<Object>> BVH::intersect(Ray r) {
+    return intersect(r, root);
+}
+
+std::pair<std::optional<Intersection>, std::optional<Object>> BVH::intersect(Ray r, int node_id) {
+    Node node = nodes[node_id];
+    if (node.is_leaf) {
+        std::optional<float> inter = std::nullopt;
+        std::optional<Object> obj = std::nullopt;
+        std::optional<Intersection> full_inter = std::nullopt;
+        for (int i = node.left; i < node.right; ++i) {
+            std::optional<Intersection> res_int  = intersection(r, objects[i]);
+            if (res_int.has_value() && (!inter.has_value() || inter.value() > res_int.value().t)) {
+                inter = res_int.value().t;
+                full_inter = res_int;
+                obj = objects[i];
+            }
+        }
+        return {full_inter, obj};
+    }
+    Node left_node = nodes[node.left];
+    Node right_node = nodes[node.right];
+    Box b_left = Box((left_node.maxim - left_node.minim) / glm::vec3(2.0));
+    Box b_right = Box((right_node.maxim - right_node.minim) / glm::vec3(2.0));
+    std::optional<Intersection> aabb_left_intersect = intersection(r, b_left);
+    std::optional<Intersection> aabb_right_intersect = intersection(r, b_right);
+
+    if (!aabb_left_intersect.has_value() && !aabb_right_intersect.has_value()) {
+        return {std::nullopt, std::nullopt};
+    }
+    if (!aabb_left_intersect.has_value()) {
+        return intersect(r, node.right);
+    }
+    if (!aabb_right_intersect.has_value()) {
+        return intersect(r, node.left);
+    }
+
+    int first = node.left;
+    int second = node.right;
+    float f_t = aabb_left_intersect.value().t;
+    float s_t = aabb_right_intersect.value().t;
+    if (f_t > s_t) {
+        std::swap(first, second);
+        std::swap(f_t, s_t);
+    }
+    auto res = intersect(r, first);
+    if (!res.first.has_value()) {
+        return intersect(r, second);
+    }
+    if (res.first.value().t < s_t) {
+        return res;
+    }
+    auto res2 = intersect(r, second);
+    if (!res2.first.has_value() || res.first.value().t < res2.first.value().t) {
+        return res;
+    }
+    return res2;
 }

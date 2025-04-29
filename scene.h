@@ -5,6 +5,7 @@
 #include "structures.h"
 #include "distribution.h"
 #include "ray.h"
+#include "bvh.h"
 
 #pragma once
 
@@ -20,7 +21,9 @@ struct Scene {
     int recursion_depth;
     int samples;
 
-    std::vector<Object> objects;
+    std::vector<Object> planes;
+    BVH objects;
+    BVH lights;
 
     MixDistribution dist;
     std::minstd_rand g = std::minstd_rand(239);
