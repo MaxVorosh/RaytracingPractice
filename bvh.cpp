@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include "bvh.h"
+#include "distribution.h"
 
 float get_score(std::pair<glm::vec3, glm::vec3> aabb) {
     glm::vec3 size = aabb.second - aabb.first;
@@ -183,4 +184,34 @@ std::pair<std::optional<Intersection>, std::optional<Object>> BVH::intersect(Ray
         return res;
     }
     return res2;
+}
+
+float BVH::pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d) {
+    return pdf(point, norm, d, root);
+}
+
+float BVH::pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d, int node_id) {
+    Node node = nodes[node_id];
+    if (node.is_leaf) {
+        float res = 0;
+        for (int i = node.left; i < node.right; ++i) {
+            res += LightDistribution(0, objects[i]).pdf(point, norm, d); // Using that there is no sampling
+        }
+        return res;
+    }
+    Node left_node = nodes[node.left];
+    Node right_node = nodes[node.right];
+    Box b_left = Box((left_node.maxim - left_node.minim) / glm::vec3(2.0));
+    Box b_right = Box((right_node.maxim - right_node.minim) / glm::vec3(2.0));
+    std::optional<Intersection> aabb_left_intersect = intersection(Ray(point, d), b_left);
+    std::optional<Intersection> aabb_right_intersect = intersection(Ray(point, d), b_right);
+
+    float res = 0;
+    if (aabb_left_intersect.has_value()) {
+        res += pdf(point, norm, d, node.left);
+    }
+    if (aabb_right_intersect.has_value()) {
+        res += pdf(point, norm, d, node.right);
+    }
+    return res;
 }

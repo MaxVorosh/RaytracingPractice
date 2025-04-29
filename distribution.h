@@ -44,15 +44,3 @@ struct LightDistribution : public Distribution {
     float pdfTriangle();
     float pdfEllips(glm::vec3 norm);
 };
-
-struct MixDistribution : public Distribution {
-    std::vector<LightDistribution> lights;
-    CosineDistribution cosine;
-
-    MixDistribution() {};
-    MixDistribution(CosineDistribution cosine, int seed);
-
-    glm::vec3 sample(glm::vec3 point, glm::vec3 norm) override;
-    float pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d) override;
-    void add_light(LightDistribution light);
-};

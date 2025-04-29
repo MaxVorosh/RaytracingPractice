@@ -23,6 +23,8 @@ add_executable(raytracing main.cpp
     ray.h
     distribution.cpp
     distribution.h
+    mix_distribution.cpp
+    mix_distribution.h
     scene.h
     bvh.h
     bvh.cpp

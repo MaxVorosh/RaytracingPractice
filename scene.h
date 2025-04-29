@@ -4,6 +4,7 @@
 #include <glm/vec3.hpp>
 #include "structures.h"
 #include "distribution.h"
+#include "mix_distribution.h"
 #include "ray.h"
 #include "bvh.h"
 

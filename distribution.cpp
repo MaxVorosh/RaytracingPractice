@@ -162,35 +162,3 @@ float LightDistribution::pdfEllips(glm::vec3 norm) {
     glm::vec3 smth = glm::vec3(norm.x * radius.y * radius.z, radius.x * norm.y * radius.z, radius.x * radius.y * norm.z);
     return 1 / (4 * 3.14 * glm::length(smth));
 }
-
-MixDistribution::MixDistribution(CosineDistribution cosine, int seed) : Distribution(seed) {
-    this->cosine = cosine;
-}
-
-glm::vec3 MixDistribution::sample(glm::vec3 point, glm::vec3 norm) {
-    std::uniform_int_distribution<> bin(0, 1);
-    int group = bin(g);
-    if (group == 0 || lights.size() == 0) {
-        return cosine.sample(point, norm);
-    }
-    
-    std::uniform_int_distribution<> lightDist(0, lights.size() - 1);
-    int lightInd = lightDist(g);
-    return lights[lightInd].sample(point, norm);
-}
-
-float MixDistribution::pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d) {
-    if (lights.size() == 0) {
-        return cosine.pdf(point, norm, d);
-    }
-    float p = 0.5 * cosine.pdf(point, norm, d);
-    int N = lights.size();
-    for (int i = 0; i < N; ++i) {
-        p += 0.5 / float(N) * lights[i].pdf(point, norm, d);
-    }
-    return p;
-}
-
-void MixDistribution::add_light(LightDistribution light) {
-    lights.push_back(light);
-}

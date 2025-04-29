@@ -123,13 +123,14 @@ Scene parse(std::string filename) {
     }
     scene.objects.build_node(objects);
     scene.dist = MixDistribution(CosineDistribution(42), 32);
-    // for (int i = 0; i < scene.objects.size(); ++i) {
-    //     if (scene.objects[i].emission != glm::vec3(0.0)) {
-    //         if (Plane* pval = std::get_if<Plane>(&scene.objects[i].shape)) {
-    //             continue;
-    //         }
-    //         scene.dist.add_light(LightDistribution(44 + i, scene.objects[i]));
-    //     }
-    // }
+    std::vector<Object> lights;
+    for (int i = 0; i < objects.size(); ++i) {
+        if (objects[i].emission != glm::vec3(0.0)) {
+            lights.push_back(objects[i]);
+        }
+    }
+    if (lights.size() > 0) {
+        scene.dist.lights.build_node(lights);
+    }
     return scene;
 }
