@@ -18,6 +18,7 @@ add_executable(raytracing main.cpp
     image_writer.cpp
     image_writer.h
     structures.h
+    structures.cpp
     ray.cpp
     ray.h
     distribution.cpp

@@ -86,4 +86,9 @@ struct Object {
     glm::vec3 emission = glm::vec3(0.0);
     Material material = Material::Diffuse;
     float ior;
+
+    std::pair<glm::vec3, glm::vec3> aabb();
+
+private:
+    std::pair<glm::vec3, glm::vec3> raw_aabb(std::vector<glm::vec3>& points);
 };
