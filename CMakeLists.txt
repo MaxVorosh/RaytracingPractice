@@ -24,6 +24,8 @@ add_executable(raytracing main.cpp
     distribution.cpp
     distribution.h
     scene.h
+    bvh.h
+    bvh.cpp
 )
 
 target_include_directories(raytracing PUBLIC .)

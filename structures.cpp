@@ -32,16 +32,12 @@ std::pair<glm::vec3, glm::vec3> Object::aabb() {
     return raw_aabb(points);
 }
 
-std::pair<glm::vec3, glm::vec3> Object::raw_aabb(std::vector<glm::vec3>& points) {
+std::pair<glm::vec3, glm::vec3> raw_aabb(std::vector<glm::vec3>& points) {
     glm::vec3 minim = points[0];
     glm::vec3 maxim = points[0];
     for (int i = 1; i < points.size(); ++i) {
-        minim.x = std::min(minim.x, points[i].x);
-        minim.y = std::min(minim.y, points[i].y);
-        minim.z = std::min(minim.z, points[i].z);
-        maxim.x = std::max(maxim.x, points[i].x);
-        maxim.y = std::max(maxim.y, points[i].y);
-        maxim.z = std::max(maxim.z, points[i].z);
+        minim = glm::min(minim, points[i]);
+        maxim = glm::max(maxim, points[i]);
     }
     return {minim, maxim};
 }

@@ -88,7 +88,6 @@ struct Object {
     float ior;
 
     std::pair<glm::vec3, glm::vec3> aabb();
-
-private:
-    std::pair<glm::vec3, glm::vec3> raw_aabb(std::vector<glm::vec3>& points);
 };
+
+std::pair<glm::vec3, glm::vec3> raw_aabb(std::vector<glm::vec3>& points);
