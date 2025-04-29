@@ -19,7 +19,7 @@ std::pair<int, float> find_partition(std::vector<Object>& objects, int l, int r,
         points = {pref[i - l - 1].first, pref[i - l - 1].second, aabb.first, aabb.second};
         pref[i - l] = raw_aabb(points);
     }
-    auto suff = objects[r - l].aabb();
+    auto suff = objects[r - l - 1].aabb();
     for (int i = r - 1; i > l; --i) {
         // [l; i)
         float score_left = get_score(pref[i - l - 1]);
@@ -45,10 +45,10 @@ void BVH::build_node(std::vector<Object>& objects) {
     root = 0;
     nodes.push_back(Node());
     build_node(0, objects.size());
-    std::cout << nodes.size() << std::endl;
-    std::cout << nodes[0].left << ' ' << nodes[0].right << std::endl;
-    std::cout << this->objects[0].position.y << std::endl;
-    std::cout << nodes[0].is_leaf << std::endl;
+    // std::cout << nodes.size() << std::endl;
+    // std::cout << nodes[0].left << ' ' << nodes[0].right << std::endl;
+    // std::cout << this->objects[0].position.y << std::endl;
+    // std::cout << nodes[0].is_leaf << std::endl;
 }
 
 void BVH::build_node(int l, int r) {
@@ -61,7 +61,7 @@ void BVH::build_node(int l, int r) {
     }
     nodes.back().minim = aabb.first;
     nodes.back().maxim = aabb.second;
-    if (r - l <= 4) {
+    if (r - l <= 1) {
         nodes.back().is_leaf = true;
         nodes.back().left = l;
         nodes.back().right = r;
@@ -122,7 +122,7 @@ void BVH::build_node(int l, int r) {
     nodes.back().left = nodes.size();
     nodes.push_back(Node());
     build_node(l, ind);
-    nodes[ind].right = nodes.size();
+    nodes[node_ind].right = nodes.size();
     nodes.push_back(Node());
     build_node(ind, r);
 }
@@ -149,8 +149,14 @@ std::pair<std::optional<Intersection>, std::optional<Object>> BVH::intersect(Ray
     }
     Node left_node = nodes[node.left];
     Node right_node = nodes[node.right];
-    Box b_left = Box((left_node.maxim - left_node.minim) / glm::vec3(2.0));
-    Box b_right = Box((right_node.maxim - right_node.minim) / glm::vec3(2.0));
+    Object b_left = Object();
+    glm::vec3 left_size = (left_node.maxim - left_node.minim) / glm::vec3(2.0);
+    b_left.shape = Box(left_size);
+    b_left.position = left_node.minim + left_size;
+    Object b_right = Object();
+    glm::vec3 right_size = (right_node.maxim - right_node.minim) / glm::vec3(2.0);
+    b_right.shape = Box(right_size);
+    b_right.position = right_node.minim + right_size;
     std::optional<Intersection> aabb_left_intersect = intersection(r, b_left);
     std::optional<Intersection> aabb_right_intersect = intersection(r, b_right);
 
