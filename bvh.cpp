@@ -19,7 +19,7 @@ std::pair<int, float> find_partition(std::vector<Object>& objects, int l, int r,
         points = {pref[i - l - 1].first, pref[i - l - 1].second, aabb.first, aabb.second};
         pref[i - l] = raw_aabb(points);
     }
-    auto suff = objects[r - l - 1].aabb();
+    auto suff = objects[r - 1].aabb();
     for (int i = r - 1; i > l; --i) {
         // [l; i)
         float score_left = get_score(pref[i - l - 1]);
@@ -59,6 +59,7 @@ void BVH::build_node(std::vector<Object>& objects) {
     root = 0;
     nodes.push_back(Node());
     build_node(0, objects.size());
+    // std::cout << objects.size() << std::endl;
     // std::cout << nodes.size() << std::endl;
     // std::cout << nodes[0].left << ' ' << nodes[0].right << std::endl;
     // std::cout << nodes[0].is_leaf << std::endl;
