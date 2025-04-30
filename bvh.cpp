@@ -29,7 +29,7 @@ std::pair<int, float> find_partition(std::vector<Object>& objects, int l, int r,
             score = new_score;
             ind = i;
         }
-        auto new_aabb = objects[i].aabb();
+        auto new_aabb = objects[i - 1].aabb();
         points = {new_aabb.first, new_aabb.second, suff.first, suff.second};
         suff = raw_aabb(points);
     }
