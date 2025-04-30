@@ -24,7 +24,7 @@ std::pair<int, float> find_partition(std::vector<Object>& objects, int l, int r,
         // [l; i)
         float score_left = get_score(pref[i - l - 1]);
         float score_right = get_score(suff);
-        float new_score = score_left * (i - l) + score_right * (r - i);
+        float new_score = score_left * float(i - l) + score_right * float(r - i);
         if (new_score < score) {
             score = new_score;
             ind = i;
@@ -40,6 +40,20 @@ BVH::BVH() {
     root = -1;
 }
 
+int BVH::depth(int node_id) {
+    if (nodes[node_id].is_leaf) {
+        return 1;
+    }
+    return 1 + std::max(depth(nodes[node_id].left), depth(nodes[node_id].right));
+}
+
+int BVH::nodes_cnt(int node_id) {
+    if (nodes[node_id].is_leaf) {
+       return nodes[node_id].right - nodes[node_id].left; 
+    }
+    return nodes_cnt(nodes[node_id].left) + nodes_cnt(nodes[node_id].right);
+}
+
 void BVH::build_node(std::vector<Object>& objects) {
     this->objects = objects;
     root = 0;
@@ -47,8 +61,10 @@ void BVH::build_node(std::vector<Object>& objects) {
     build_node(0, objects.size());
     // std::cout << nodes.size() << std::endl;
     // std::cout << nodes[0].left << ' ' << nodes[0].right << std::endl;
-    // std::cout << this->objects[0].position.y << std::endl;
     // std::cout << nodes[0].is_leaf << std::endl;
+    // std::cout << depth(root) << std::endl;
+    // std::cout << depth(nodes[root].left) << ' ' << depth(nodes[root].right) << std::endl;
+    // std::cout << nodes_cnt(nodes[root].left) << ' ' << nodes_cnt(nodes[root].right) << std::endl;
 }
 
 void BVH::build_node(int l, int r) {
@@ -61,7 +77,7 @@ void BVH::build_node(int l, int r) {
     }
     nodes.back().minim = aabb.first;
     nodes.back().maxim = aabb.second;
-    if (r - l <= 1) {
+    if (r - l <= 4) {
         nodes.back().is_leaf = true;
         nodes.back().left = l;
         nodes.back().right = r;
@@ -89,7 +105,7 @@ void BVH::build_node(int l, int r) {
         return a_center < b_center;
     };
     int best_axis = 0;
-    float score = get_score(aabb);
+    float score = get_score(aabb) * float(r - l);
     auto res = find_partition(objects, l, r, score, sort_x);
     int ind = res.first;
     score = res.second;

@@ -27,6 +27,8 @@ private:
     void build_node(int l, int r);
     std::pair<std::optional<Intersection>, std::optional<Object>> intersect(Ray r, int node_id);
     float pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d, int node_id);
+    int depth(int node_id);
+    int nodes_cnt(int node_id);
 };
 
 
