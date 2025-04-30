@@ -123,14 +123,14 @@ Scene parse(std::string filename) {
     }
     scene.objects.build_node(objects);
     scene.dist = MixDistribution(CosineDistribution(42), 32);
-    // std::vector<Object> lights;
-    // for (int i = 0; i < objects.size(); ++i) {
-    //     if (objects[i].emission != glm::vec3(0.0)) {
-    //         lights.push_back(objects[i]);
-    //     }
-    // }
-    // if (lights.size() > 0) {
-    //     scene.dist.lights.build_node(lights);
-    // }
+    std::vector<Object> lights;
+    for (int i = 0; i < objects.size(); ++i) {
+        if (objects[i].emission != glm::vec3(0.0)) {
+            lights.push_back(objects[i]);
+        }
+    }
+    if (lights.size() > 0) {
+        scene.dist.lights.build_node(lights);
+    }
     return scene;
 }
