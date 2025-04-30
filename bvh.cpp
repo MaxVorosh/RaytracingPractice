@@ -214,6 +214,7 @@ float BVH::pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d) {
 }
 
 float BVH::pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d, int node_id) {
+    // std::cout << node_id << std::endl;
     Node node = nodes[node_id];
     if (node.is_leaf) {
         float res = 0;
@@ -224,10 +225,17 @@ float BVH::pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d, int node_id) {
     }
     Node left_node = nodes[node.left];
     Node right_node = nodes[node.right];
-    Box b_left = Box((left_node.maxim - left_node.minim) / glm::vec3(2.0));
-    Box b_right = Box((right_node.maxim - right_node.minim) / glm::vec3(2.0));
-    std::optional<Intersection> aabb_left_intersect = intersection(Ray(point, d), b_left);
-    std::optional<Intersection> aabb_right_intersect = intersection(Ray(point, d), b_right);
+    Object b_left = Object();
+    glm::vec3 left_size = (left_node.maxim - left_node.minim) / glm::vec3(2.0);
+    b_left.shape = Box(left_size);
+    b_left.position = left_node.minim + left_size;
+    Object b_right = Object();
+    glm::vec3 right_size = (right_node.maxim - right_node.minim) / glm::vec3(2.0);
+    b_right.shape = Box(right_size);
+    b_right.position = right_node.minim + right_size;
+    const float eps = 1e-4;
+    std::optional<Intersection> aabb_left_intersect = intersection(Ray(point + norm * eps, d), b_left);
+    std::optional<Intersection> aabb_right_intersect = intersection(Ray(point + norm * eps, d), b_right);
 
     float res = 0;
     if (aabb_left_intersect.has_value()) {

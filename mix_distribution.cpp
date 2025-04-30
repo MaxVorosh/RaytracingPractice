@@ -1,3 +1,4 @@
+#include <iostream>
 #include "mix_distribution.h"
 
 MixDistribution::MixDistribution(CosineDistribution cosine, int seed) : Distribution(seed) {
@@ -25,6 +26,6 @@ float MixDistribution::pdf(glm::vec3 point, glm::vec3 norm, glm::vec3 d) {
     float p = 0.5 * cosine.pdf(point, norm, d);
     int N = lights.objects.size();
     float lights_p = lights.pdf(point, norm, d);
-    p += 0.5 / float(N) * lights_p * 3.14;
+    p += 0.5 / float(N) * lights_p;
     return p;
 }
